@@ -1,53 +1,64 @@
+import javax.swing.plaf.TableHeaderUI;
+import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class App {
+    // First in first out
+    private BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(10);
 
     public static void main(String[] args) {
-        // CountDownLatch is one of the MANY pretty cool ThreadSafe classes and it's...
-        // counting down threadSafely - ooh yeah
-        CountDownLatch latch = new CountDownLatch(5);
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        App app = new App();
+        Thread producer = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                app.produce();
+            }
+        });
 
-        for (int i = 0; i < 5; i++) {
-            executorService.submit(new Processor(latch, i));
+        Thread consumer = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                app.consume();
+            }
+        });
+
+        producer.start();
+        consumer.start();
+    }
+
+    private void produce() {
+        Random random = new Random();
+        while (true) {
+            try {
+                queue.put(random.nextInt(100));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+    }
 
-        try {
-            // Current thread waits until countdown latch is counted to 0
-            latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private void consume() {
+        Random random = new Random();
+        while (true) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (random.nextInt(10) == 0) {
+
+                Integer value = null;
+                try {
+                    value = queue.take();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Taken value: " + value + "; Queue size is " + queue.size());
+
+            }
         }
-
-        System.out.println("Completed.");
-        executorService.shutdown();
     }
 }
 
-class Processor implements Runnable {
-
-    private CountDownLatch latch;
-    private Integer id;
-    public Processor(CountDownLatch latch, Integer id) {
-        this.latch = latch;
-        this.id = id;
-    }
-
-    @Override
-    public void run() {
-        System.out.println("Starting " + id);
-
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        latch.countDown();
-        System.out.println("Stopping " + id);
-    }
-}
 
