@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -6,42 +7,47 @@ import java.util.concurrent.TimeUnit;
 public class App {
 
     public static void main(String[] args) {
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        // CountDownLatch is one of the MANY pretty cool ThreadSafe classes and it's...
+        // counting down threadSafely - ooh yeah
+        CountDownLatch latch = new CountDownLatch(5);
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
 
-        for(int i = 0;i < 5;i++) {
-            executorService.submit(new Processor(i));
+        for (int i = 0; i < 5; i++) {
+            executorService.submit(new Processor(latch, i));
         }
 
-        executorService.shutdown();
-        System.out.println("All tasks submitted");
         try {
-            executorService.awaitTermination(1, TimeUnit.DAYS);
+            // Current thread waits until countdown latch is counted to 0
+            latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("All tasks completed");
-    }
 
+        System.out.println("Completed.");
+        executorService.shutdown();
+    }
 }
 
-class Processor implements Runnable{
+class Processor implements Runnable {
 
-    private int id;
-
-    public Processor(int id) {
+    private CountDownLatch latch;
+    private Integer id;
+    public Processor(CountDownLatch latch, Integer id) {
+        this.latch = latch;
         this.id = id;
     }
 
     @Override
     public void run() {
-        System.out.println("Starting : " + id);
+        System.out.println("Starting " + id);
 
         try {
-            Thread.sleep(5000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        System.out.println("Terminating : " + id);
+        latch.countDown();
+        System.out.println("Stopping " + id);
     }
 }
+
