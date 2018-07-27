@@ -1,23 +1,31 @@
+import java.util.LinkedList;
+
 public class Producer {
 
+    private LinkedList<Integer> list;
+    private Integer limit = 10;
     private final Object lock;
 
-    public Producer(Object lock) {
+    public Producer(LinkedList<Integer> list, Object lock) {
+        this.list = list;
         this.lock = lock;
     }
 
     public void produce() {
-        synchronized (lock) {
-            System.out.println("Producer started ...");
-            try {
-                // Pauses the Thread. Releases the lock
-                // To stop the thread that currently has a lock I have to call wait method of THAT lock
-                // if I just call wait I'll call wait method of this, and I don't own 'this' monitor
-                lock.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        int value = 0;
+
+        while (true) {
+            synchronized (lock) {
+                while (list.size() == limit){
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                list.add(value++);
+                lock.notify();
             }
-            System.out.println("Producer resumed");
         }
     }
 }
