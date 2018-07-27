@@ -7,42 +7,37 @@ import java.util.concurrent.locks.ReentrantLock;
 public class App {
 
     public static void main(String[] args) {
-        // Semaphore maintains a count of available permits
-        Semaphore semaphore = new Semaphore(1, true);
-
-        // Increments the number of available permits
-        semaphore.release();
-
-        try {
-            // Decrements the number of available permits
-            // if semaphore has no permits the require will pause current thread until some permit is available
-            semaphore.acquire();
-            semaphore.acquire();
-//            semaphore.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("Semaphore available permits : " + semaphore.availablePermits());
-
         ExecutorService executorService = Executors.newCachedThreadPool();
 
-        for (int i = 0; i < 200; i++) {
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    Connection.getInstance().tryConnect();
-                }
-            });
-        }
+        // Callable can return a value wrapped in a Future object, that has the same value type as value
+        // specified in Callable. When we submit callable it returns a Future object;
+        Future<Integer> result = executorService.submit(new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                Random random = new Random();
+                int duration = random.nextInt(4000);
+
+                System.out.println("Callable started ...");
+                Thread.sleep(duration);
+                System.out.println("Callable done its work. ");
+
+                return duration;
+            }
+        });
 
         executorService.shutdown();
+
         try {
-            executorService.awaitTermination(1, TimeUnit.DAYS);
+            // Future get method will wait until the Callable is terminated
+            System.out.println("Time wasted on task : " + result.get());
         } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            // get throws ExecutionException if Callable throws any exception
             e.printStackTrace();
         }
     }
+
 }
 
 
