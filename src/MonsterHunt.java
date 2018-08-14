@@ -21,8 +21,9 @@ public class MonsterHunt implements Callable<String> {
 
     @Override
     public String call() throws Exception {
+        System.out.println("Hunt is started");
         Random random = new Random();
-        int huntTime = random.nextInt(2000);
+        int huntTime = 2000 + random.nextInt(5000);
         Thread.sleep(huntTime);
         return hunt();
     }
@@ -35,11 +36,15 @@ public class MonsterHunt implements Callable<String> {
         if (result <= successChance) {
             hunters.put(hunter);
             monsters.put(monster);
-            return "Hunter " + hunter.getName() + " defeated " + monster.getName();
+            System.out.println("Hunter " + hunter.getName() + " defeated " + monster.getName() + ". Success chance: " + successChance);
+            return "Hunter " + hunter.getName() + " defeated " + monster.getName() + ". Success chance: " + successChance;
         } else {
             hunters.put(hunter);
             monsters.put(monster);
-            return "Hunter " + hunter.getName() + " failed his mission. " + monster.getName() + " survived";
+            System.out.println("Hunter " + hunter.getName() + " failed his mission. " + monster.getName() + " survived." + "Success chance: "
+                    + successChance);
+            return "Hunter " + hunter.getName() + " failed his mission. " + monster.getName() + " survived." + "Success chance: "
+                    + successChance;
         }
     }
 }

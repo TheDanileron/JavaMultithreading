@@ -26,8 +26,7 @@ public class HuntersApp {
         ExecutorService executorService = Executors.newFixedThreadPool(hunters.size());
 
         while (true) {
-            Future<String> future = executorService.submit(new MonsterHunt(monsters, hunters));
-            System.out.println(future.get());
+            Future<String> huntResult = executorService.submit(new MonsterHunt(monsters, hunters));
         }
     }
 
